@@ -1,0 +1,27 @@
+---
+title: "STAT741 Group Project 1"
+output: html_document
+date: "2026-02-05"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(haven)
+```
+
+```{r}
+# Load the data
+asthma_df <- read_dta("data/family asthma p1 data version2.dta")
+```
+
+```{r}
+# Reshape the data
+asthma_tidy_df <- asthma_df %>%
+  pivot_longer(
+    cols = matches("\\d+$"),           
+    names_to = c(".value", "visit"),  
+    names_pattern = "([a-z]+)(\\d+)"   
+  ) %>%
+  select(family, id, visit, everything())
+
+```
