@@ -4,6 +4,13 @@ output: html_document
 date: "2026-02-05"
 ---
 
+---
+Research Question
+1.  Do asthmatics have steeper rates of decline (slope) or lower levels of lung function (FEV1) than non-asthmatics, independent of smoking history? 
+
+2. Do asthmatic smokers have steeper rates of decline or lower levels of lung function than non-asthmatic smokers? Here you can explore three options 1) using the fixed effect variable ever smoke, 2) using the time dependent variable for smoking, or 3) using the current number of cigarettes per day. When using this I would suggest making it a categorical variable using quartiles etc.
+---
+
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(haven)
@@ -25,3 +32,4 @@ asthma_tidy_df <- asthma_df %>%
   select(family, id, visit, everything())
 
 ```
+
