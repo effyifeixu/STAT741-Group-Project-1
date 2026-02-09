@@ -21,7 +21,51 @@ columns = colnames(asthma_tidy_df)
 columns
 
 # See what is in each of the columns
+dim(asthma_tidy_df)
+str(asthma_tidy_df)
 summary(asthma_tidy_df)
+
+#Cleaning up the data and applying factors
+asthma_tidy_df$id <- factor(asthma_tidy_df$id)
+asthma_tidy_df$family <- factor(asthma_tidy_df$family)
+asthma_tidy_df$sex <- factor(asthma_tidy_df$sex)
+asthma_tidy_df$smk <- factor(asthma_tidy_df$smk)
+asthma_tidy_df$smkever <- factor(asthma_tidy_df$smkever,
+                                 levels = c(0,1),
+                                 labels = c("never","ever"))
+
+
+#Making numeric
+asthma_tidy_df$visit <- as.numeric(asthma_tidy_df$visit)
+
+#Confirm
+str(asthma_tidy_df$id)
+str(asthma_tidy_df$family)
+str(asthma_tidy_df$sex)
+str(asthma_tidy_df$smk)
+str(asthma_tidy_df$visit)
+
+# Cleaning the data, ensures model will view data correctly
+asthma_tidy_df <- asthma_tidy_df |>
+  dplyr::mutate(
+    id = factor(id),
+    family = factor(family),
+    visit = as.numeric(visit),
+    sex = factor(sex),
+    smk = factor(smk)
+  )
+
+
+# NA Diagnostics before fitting data, amount of NAs in the data
+vars <- c("fev","visit","age","sex","smk","id")
+colSums(is.na(asthma_tidy_df[vars]))
+nrow(na.omit(asthma_tidy_df[vars]))
+
+sapply(asthma_tidy_df, class)
+dplyr::glimpse(asthma_tidy_df)
+
+
+
 
 #Research Question Drives what I should look at
 #Question 1 has to do with if asthmatics suffer steeper rates of decline or lower levels of lung function independent of smoking?
@@ -131,14 +175,54 @@ ggplot(asthma_tidy_df, aes(x = cncig, y = fev)) +
 # I found out I also need to include an interaction, asthma*visit is shorthand for asthma + visit + asthma:visit
 # fev ~ asthma*visit + mht + mwt + age + smk + smkever + cncig + (1|family/id) + (1+visit|id)
 
+# This model didn't work because the amount of parameters, which I will investigate with the code below
+# fit <- lmer(
+#   fev ~ asthma*visit + mht + mwt + age + smk + smkever + cncig + (1|family/id) + (1+visit|id),
+#   data = asthma_tidy_df,
+#   REML = TRUE
+# )
 
-fit <- lmer(
-  fev ~ asthma*visit + mht + mwt + age + smk + smkever + cncig + (1|family/id) + (1+visit|id),
-  data = asthma_tidy_df,
-  REML = TRUE
-)
+# summary(fit)
 
-summary(fit)
+length(unique(asthma_tidy_df$id))              # how many ids
+table(table(asthma_tidy_df$id))                # how many ids have 1 obs, 2 obs, etc.
+is.factor(asthma_tidy_df$visit); nlevels(asthma_tidy_df$visit)
+
+nrow(asthma_tidy_df)
+lme4::nobs(your_model_fit)  # after fitting
+colSums(is.na(model.frame(your_formula, asthma_tidy_df)))
+
+# First, set up simplest model and work from there
+m0 <- lmer(fev ~ visit + (1 | id), data = asthma_tidy_df, REML = TRUE)
+summary(m0)
+
+
+#Plot the raw trajectories
+ggplot(asthma_tidy_df, aes(x = visit, y = fev, group = id)) +
+  geom_line(alpha = 0.1) +
+  geom_smooth(aes(group = 1), color = "red", se = FALSE) +
+  labs(title = "FEV Trajectories by Patient")
+
+#Plot subject specific fitted lines
+ranef_df <- ranef(m0)$id
+ranef_df$id <- rownames(ranef_df)
+colnames(ranef_df)[1] <- "u_i"
+
+#Plot a few individual fitted trajectories
+ggplot(ranef_df, aes(x = u_i)) +
+  geom_histogram(bins = 30) +
+  labs(title = "Distribution of Random Intercepts",
+       x = "Subject-specific deviation")
+
+
+
+
+
+#Compare models code
+#m_ri_ML  <- update(m_ri, REML = FALSE)
+#m_rs0_ML <- update(m_rs0, REML = FALSE)
+#anova(m_ri_ML, m_rs0_ML)
+
 
 
 
