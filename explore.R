@@ -3,7 +3,6 @@ library(haven)
 library(ggplot2)
 library(lme4)
 
-
 # Load the data
 asthma_df <- read_dta("data/family asthma p1 data version2.dta")
 
@@ -34,7 +33,6 @@ asthma_tidy_df$smkever <- factor(asthma_tidy_df$smkever,
                                  levels = c(0,1),
                                  labels = c("never","ever"))
 
-
 #Making numeric
 asthma_tidy_df$visit <- as.numeric(asthma_tidy_df$visit)
 
@@ -63,8 +61,6 @@ nrow(na.omit(asthma_tidy_df[vars]))
 
 sapply(asthma_tidy_df, class)
 dplyr::glimpse(asthma_tidy_df)
-
-
 
 
 #Research Question Drives what I should look at
@@ -196,7 +192,6 @@ colSums(is.na(model.frame(your_formula, asthma_tidy_df)))
 m0 <- lmer(fev ~ visit + (1 | id), data = asthma_tidy_df, REML = TRUE)
 summary(m0)
 
-
 #Plot the raw trajectories
 ggplot(asthma_tidy_df, aes(x = visit, y = fev, group = id)) +
   geom_line(alpha = 0.1) +
@@ -214,14 +209,32 @@ ggplot(ranef_df, aes(x = u_i)) +
   labs(title = "Distribution of Random Intercepts",
        x = "Subject-specific deviation")
 
+# Second model
+m1 <- lmer(fev ~ visit + (visit|id), data = asthma_tidy_df, REML=TRUE)
+summary(m1)
+
+#Plot subject specific fitted lines
+ranef_df <- ranef(m1)$id
+ranef_df$id <- rownames(ranef_df)
+colnames(ranef_df)[1] <- "u_i"
+
+#Plot a few individual fitted trajectories
+ggplot(ranef_df, aes(x = u_i)) +
+  geom_histogram(bins = 30) +
+  labs(title = "Distribution of Random Intercepts",
+       x = "Subject-specific deviation")
 
 
 
 
 #Compare models code
-#m_ri_ML  <- update(m_ri, REML = FALSE)
-#m_rs0_ML <- update(m_rs0, REML = FALSE)
-#anova(m_ri_ML, m_rs0_ML)
+m0_ML  <- update(m0, REML = FALSE)
+m1_ML <- update(m1, REML = FALSE)
+anova(m0_ML, m1_ML)
+#Output of this favors random intercept model
+
+#Ok, now to make the model using family, because Dr. Lin said we want to do that as well
+
 
 
 
