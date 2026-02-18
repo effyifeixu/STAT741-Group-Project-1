@@ -6,7 +6,7 @@ library(lmerTest)   # Gives the p-values for lme4 models
 library(sjPlot)     # Great for visualizing mixed model results
 
 # Load data
-data <- read_dta("C:/Users/Shubh/Downloads/family asthma p1 data version2.dta")
+data <- read_dta("data/family asthma p1 data version2.dta")
 
 # Inspect
 summary(data)
