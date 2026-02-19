@@ -9,10 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
+<meta name="author" content="Yifei Xu, Shubh Patel, Max Brown" />
 
-<meta name="date" content="2026-02-05" />
+<meta name="date" content="2026-02-19" />
 
-<title>STAT741 Group Project 1</title>
+<title>Lung Function Analysis Stat 741 Group Project</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -349,12 +350,47 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">STAT741 Group Project 1</h1>
-<h4 class="date">2026-02-05</h4>
+<h1 class="title toc-ignore">Lung Function Analysis Stat 741 Group
+Project</h1>
+<h4 class="author">Yifei Xu, Shubh Patel, Max Brown</h4>
+<h4 class="date">2026-02-19</h4>
 
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#introduction" id="toc-introduction"><span class="toc-section-number">1</span> Introduction</a></li>
+<li><a href="#data" id="toc-data"><span class="toc-section-number">2</span> Data</a></li>
+<li><a href="#data-cleaning" id="toc-data-cleaning"><span class="toc-section-number">3</span> Data Cleaning</a></li>
+<li><a href="#exploratory-analysis" id="toc-exploratory-analysis"><span class="toc-section-number">4</span> Exploratory Analysis</a></li>
+<li><a href="#models" id="toc-models"><span class="toc-section-number">5</span> Models</a>
+<ul>
+<li><a href="#model-1" id="toc-model-1"><span class="toc-section-number">5.1</span> Model 1</a></li>
+<li><a href="#model-2" id="toc-model-2"><span class="toc-section-number">5.2</span> Model 2</a></li>
+</ul></li>
+<li><a href="#model-comparisons" id="toc-model-comparisons"><span class="toc-section-number">6</span> Model Comparisons</a></li>
+<li><a href="#diagnostics" id="toc-diagnostics"><span class="toc-section-number">7</span> Diagnostics</a></li>
+<li><a href="#conclusions" id="toc-conclusions"><span class="toc-section-number">8</span> Conclusions</a></li>
+</ul>
+</div>
 
+<div id="introduction" class="section level2" number="1">
+<h2><span class="header-section-number">1</span> Introduction</h2>
+<p>In this report we… Fix this Research Question 1. Do asthmatics have
+steeper rates of decline (slope) or lower levels of lung function (FEV1)
+than non-asthmatics, independent of smoking history?</p>
+<ol start="2" style="list-style-type: decimal">
+<li>Do asthmatic smokers have steeper rates of decline or lower levels
+of lung function than non-asthmatic smokers? Here you can explore three
+options 1) using the fixed effect variable ever smoke, 2) using the time
+dependent variable for smoking, or 3) using the current number of
+cigarettes per day. When using this I would suggest making it a
+categorical variable using quartiles etc.</li>
+</ol>
+</div>
+<div id="data" class="section level2" number="2">
+<h2><span class="header-section-number">2</span> Data</h2>
+<p>Data stuff will go here</p>
 <pre class="r"><code># Load the data
 asthma_df &lt;- read_dta(&quot;data/family asthma p1 data version2.dta&quot;)</code></pre>
 <pre class="r"><code># Reshape the data
@@ -365,6 +401,34 @@ asthma_tidy_df &lt;- asthma_df %&gt;%
     names_pattern = &quot;([a-z]+)(\\d+)&quot;   
   ) %&gt;%
   select(family, id, visit, everything())</code></pre>
+</div>
+<div id="data-cleaning" class="section level2" number="3">
+<h2><span class="header-section-number">3</span> Data Cleaning</h2>
+<p>Data cleaning will go here</p>
+</div>
+<div id="exploratory-analysis" class="section level2" number="4">
+<h2><span class="header-section-number">4</span> Exploratory
+Analysis</h2>
+<p>Analysis here</p>
+</div>
+<div id="models" class="section level2" number="5">
+<h2><span class="header-section-number">5</span> Models</h2>
+<div id="model-1" class="section level3" number="5.1">
+<h3><span class="header-section-number">5.1</span> Model 1</h3>
+</div>
+<div id="model-2" class="section level3" number="5.2">
+<h3><span class="header-section-number">5.2</span> Model 2</h3>
+</div>
+</div>
+<div id="model-comparisons" class="section level2" number="6">
+<h2><span class="header-section-number">6</span> Model Comparisons</h2>
+</div>
+<div id="diagnostics" class="section level2" number="7">
+<h2><span class="header-section-number">7</span> Diagnostics</h2>
+</div>
+<div id="conclusions" class="section level2" number="8">
+<h2><span class="header-section-number">8</span> Conclusions</h2>
+</div>
 
 
 
