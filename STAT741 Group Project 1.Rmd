@@ -69,7 +69,7 @@ cleaned_data <- data %>%
          smk_new = factor(smk_new, levels = c(1, 2, 3), labels = c("Current", "Ex", "Never")),
          cncig_cat = as.factor(ntile(cncig_new, 4))) %>%
   dplyr::select(id, family, sex, asthma, mwt, mht, smkever, smkever_new, 
-                survey, age, smk, smk_new, cncig, cncig_new, fev, fvc) 
+                survey, age, age_centered, smk, smk_new, cncig, cncig_new, fev, fvc) 
 
 ```
 
