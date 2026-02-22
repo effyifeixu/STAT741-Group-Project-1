@@ -70,7 +70,7 @@ cleaned_data <- data %>%
          smk_new = factor(smk_new, levels = c(1, 2, 3), labels = c("Current", "Ex", "Never")),
          cncig_cat = as.factor(ntile(cncig_new, 4))) %>%
   dplyr::select(id, family, sex, asthma, mwt, mht, smkever, smkever_new, 
-                survey, age, age_centered, smk, smk_new, cncig, cncig_new, fev, fvc) 
+                survey, age, age_centered, smk, smk_new, cncig, cncig_new, cncig_cat, fev, fvc) 
 
 ```
 
@@ -279,7 +279,7 @@ model_rq1 <- lmer(fev ~ age_centered * asthma + sex + mht + smkever +
 summary(model_rq1)
 
 # Use nlme::lme() (different function but same model specification as above)
-model_rq1_null <- lme(fev ~ asthma * age_centered + smkever + mht + sex,
+model_rq1_null <- lme(fev ~ asthma * age_centered + smkever_new + mht + sex,
                      random = list(family = ~ 1, id = ~ 1 + age_centered),
                      data = asthma_tidy_df,
                      method = "REML",
@@ -287,7 +287,7 @@ model_rq1_null <- lme(fev ~ asthma * age_centered + smkever + mht + sex,
 summary(model_rq1_null) # results are the same as model_rq1
 
 # Model with a covariance structure - Continuous-time AR(1) (time spacing is unequal)
-model_rq1_car1 <- lme(fev ~ asthma * age_centered + smkever + mht + sex,
+model_rq1_car1 <- lme(fev ~ asthma * age_centered + smkever_new + mht + sex,
                       random = list(family = ~ 1, id = ~ 1 + age_centered),
                       correlation = corCAR1(form = ~ age_centered | family/id), # CAR(1) within id (nested in family)
                       data = cleaned_data,
@@ -317,27 +317,27 @@ qqnorm(residuals(model_rq1_car1))
 qqline(residuals(model_rq1_car1), col= "red")
 
 # 3. Normal Probability Plots (Random Effects)
-re <- ranef(model_rq1_car1)
+re_1 <- ranef(model_rq1_car1)
 
 # Plot Subject Random Effects (Intercept and Slope)
 par(mfrow=c(1,2))
-qqnorm(re$id$`(Intercept)`, main = "Random Intercept (Subject)")
-qqline(re$id$`(Intercept)`, col = "red")
+qqnorm(re_1$id$`(Intercept)`, main = "Random Intercept (Subject)")
+qqline(re_1$id$`(Intercept)`, col = "red")
 
-qqnorm(re$id$age_centered, main = "Random Slope (Age)")
-qqline(re$id$age_centered, col = "red")
+qqnorm(re_1$id$age_centered, main = "Random Slope (Age)")
+qqline(re_1$id$age_centered, col = "red")
 
 # Plot Family Random Effects (Intercept)
 par(mfrow=c(1,1)) 
-qqnorm(re$family$`(Intercept)`, main = "Random Intercept (Family)")
-qqline(re$family$`(Intercept)`, col = "red")
+qqnorm(re_1$family$`(Intercept)`, main = "Random Intercept (Family)")
+qqline(re_1$family$`(Intercept)`, col = "red")
 
 # 4. Test for serial correlation
 # Extract residuals from model
-res <- residuals(model_rq1_car1)
+res_1 <- residuals(model_rq1_car1)
 
 # Plot the ACF
-acf(res, main="ACF of Model Residuals") 
+acf(res_1, main="ACF of Model Residuals") 
 
 # Get lag 1 value
 acf(resid(model_q1), plot = FALSE)$acf[2]
@@ -367,6 +367,9 @@ model_rq3 <- lmer(fev ~ age_centered * asthma * smkever + sex + mht +
                   REML = TRUE,
                   control = lmerControl(optimizer = "bobyqa",
                                         optCtrl = list(maxfun = 2e5)))
+
+summary(model_rq3)
+
 ```
 
 
@@ -423,6 +426,191 @@ No significant result comes from this, so we prefer the simpler model.
 ## Conclusions
 
 
+
+
+# Question 2
+
+```{r}
+# 1) Ever Smoked as a fixed effect
+model_rq2_1 <- lme(fev ~ asthma * age_centered * smkever_new + mht + sex,
+                   random = list(family = ~ 1, id = ~ 1 + age_centered),
+                   correlation = corCAR1(form = ~ age_centered | family/id), 
+                   data = cleaned_data,
+                   method = "REML",
+                   na.action = na.omit)
+summary(model_rq2_1)
+
+# 2) Smoking status as a time-dependent variable
+model_rq2_2 <- lme(fev ~ asthma * age_centered * smk_new + mht + sex,
+                   random = list(family = ~ 1, id = ~ 1 + age_centered),
+                   correlation = corCAR1(form = ~ age_centered | family/id), 
+                   data = cleaned_data,
+                   method = "REML",
+                   na.action = na.omit)
+summary(model_rq2_2)
+
+# 3) Using the categorical quartile variable for smoking
+model_rq2_3 <- lme(fev ~ asthma * age_centered * cncig_cat + mht + sex,
+                   random = list(family = ~ 1, id = ~ 1 + age_centered),
+                   correlation = corCAR1(form = ~ age_centered | family/id), 
+                   data = cleaned_data,
+                   method = "REML",
+                   na.action = na.omit)
+summary(model_rq2_3)
+
+```
+## Model Diagnostic - Model 2.1
+
+```{r}
+# 1. Residual Plots (Fitted vs. Residuals): Check constant variance (Homoscedasticity)
+fit_q21 <- data.frame(Fitted = predict(model_rq2_1), Residuals = residuals(model_rq2_1))
+
+fit_q21 %>%
+  ggplot(aes(x = Fitted, y = Residuals)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(title = "Residuals vs Fitted Values") +
+  theme_bw()
+
+# 2. Q-Q plot: Check normality of residuals
+qqnorm(residuals(model_rq2_1))
+qqline(residuals(model_rq2_1), col= "red")
+
+# 3. Normal Probability Plots (Random Effects)
+re_21 <- ranef(model_rq2_1)
+
+# Plot Subject Random Effects (Intercept and Slope)
+par(mfrow=c(1,2))
+qqnorm(re_21$id$`(Intercept)`, main = "Random Intercept (Subject)")
+qqline(re_21$id$`(Intercept)`, col = "red")
+
+qqnorm(re_21$id$age_centered, main = "Random Slope (Age)")
+qqline(re_21$id$age_centered, col = "red")
+
+# Plot Family Random Effects (Intercept)
+par(mfrow=c(1,1)) 
+qqnorm(re_21$family$`(Intercept)`, main = "Random Intercept (Family)")
+qqline(re_21$family$`(Intercept)`, col = "red")
+
+# 4. Test for serial correlation
+# Extract residuals from model
+res_21 <- residuals(model_rq2_1)
+
+# Plot the ACF
+acf(res_21, main="ACF of Model Residuals") 
+
+# Get lag 1 value
+acf(resid(model_rq2_1), plot = FALSE)$acf[2]
+```
+## Model Diagnostic - Model 2.2
+
+```{r}
+# 1. Residual Plots (Fitted vs. Residuals): Check constant variance (Homoscedasticity)
+fit_q22 <- data.frame(Fitted = predict(model_rq2_2), Residuals = residuals(model_rq2_2))
+
+fit_q22 %>%
+  ggplot(aes(x = Fitted, y = Residuals)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(title = "Residuals vs Fitted Values") +
+  theme_bw()
+
+# 2. Q-Q plot: Check normality of residuals
+qqnorm(residuals(model_rq2_2))
+qqline(residuals(model_rq2_2), col= "red")
+
+# 3. Normal Probability Plots (Random Effects)
+re_22 <- ranef(model_rq2_2)
+
+# Plot Subject Random Effects (Intercept and Slope)
+par(mfrow=c(1,2))
+qqnorm(re_22$id$`(Intercept)`, main = "Random Intercept (Subject)")
+qqline(re_22$id$`(Intercept)`, col = "red")
+
+qqnorm(re_22$id$age_centered, main = "Random Slope (Age)")
+qqline(re_22$id$age_centered, col = "red")
+
+# Plot Family Random Effects (Intercept)
+par(mfrow=c(1,1)) 
+qqnorm(re_22$family$`(Intercept)`, main = "Random Intercept (Family)")
+qqline(re_22$family$`(Intercept)`, col = "red")
+
+# 4. Test for serial correlation
+# Extract residuals from model
+res_22 <- residuals(model_rq2_2)
+
+# Plot the ACF
+acf(res_22, main="ACF of Model Residuals") 
+
+# Get lag 1 value
+acf(resid(model_rq2_2), plot = FALSE)$acf[2]
+```
+## Model Diagnostic - Model 2.3
+
+```{r}
+# 1. Residual Plots (Fitted vs. Residuals): Check constant variance (Homoscedasticity)
+fit_q23 <- data.frame(Fitted = predict(model_rq2_3), Residuals = residuals(model_rq2_3))
+
+fit_q23 %>%
+  ggplot(aes(x = Fitted, y = Residuals)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept = 0, color = "red") +
+  labs(title = "Residuals vs Fitted Values") +
+  theme_bw()
+
+# 2. Q-Q plot: Check normality of residuals
+qqnorm(residuals(model_rq2_3))
+qqline(residuals(model_rq2_3), col= "red")
+
+# 3. Normal Probability Plots (Random Effects)
+re_23 <- ranef(model_rq2_3)
+
+# Plot Subject Random Effects (Intercept and Slope)
+par(mfrow=c(1,2))
+qqnorm(re_23$id$`(Intercept)`, main = "Random Intercept (Subject)")
+qqline(re_23$id$`(Intercept)`, col = "red")
+
+qqnorm(re_23$id$age_centered, main = "Random Slope (Age)")
+qqline(re_23$id$age_centered, col = "red")
+
+# Plot Family Random Effects (Intercept)
+par(mfrow=c(1,1)) 
+qqnorm(re_23$family$`(Intercept)`, main = "Random Intercept (Family)")
+qqline(re_23$family$`(Intercept)`, col = "red")
+
+# 4. Test for serial correlation
+# Extract residuals from model
+res_23 <- residuals(model_rq2_3)
+
+# Plot the ACF
+acf(res_23, main="ACF of Model Residuals") 
+
+# Get lag 1 value
+acf(resid(model_rq2_3), plot = FALSE)$acf[2]
+```
+
+## Model Comparison
+
+```{r}
+# Identify all variables used across your models
+vars_needed <- c("fev", "asthma", "age_centered", "mht", "sex", "smkever_new", "smk_new", "cncig_cat", "family", "id")
+
+# Create a 'complete case' dataset 
+comparison_data <- cleaned_data[complete.cases(cleaned_data[, vars_needed]), ]
+
+# Refit the models using this shared dataset and ML method
+m21_final <- lme(fev ~ asthma * age_centered * smkever_new + mht + sex,
+                random = list(family = ~ 1, id = ~ 1 + age_centered),
+                correlation = corCAR1(form = ~ age_centered | family/id), 
+                data = comparison_data, method = "ML")
+
+m22_final <- update(m1_final, fixed = fev ~ asthma * age_centered * smk_new + mht + sex)
+
+m23_final <- update(m1_final, fixed = fev ~ asthma * age_centered * cncig_cat + mht + sex)
+
+# Anova
+anova(m21_final, m22_final, m23_final)
+```
 
 
 
